@@ -257,9 +257,137 @@
         padding-bottom:max(18px, env(safe-area-inset-bottom));
       }
     }
+  
+    .start-overlay{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(243,201,105,.16), transparent 36%),
+        linear-gradient(145deg,#051326,#071b34 55%,#0b294d);
+      text-align:center;
+      transition:opacity .7s ease, visibility .7s ease;
+    }
+    .start-overlay.hide{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+    .start-box{
+      width:min(520px,100%);
+      padding:32px 22px;
+    }
+    .start-icon{
+      font-size:2.3rem;
+      margin-bottom:18px;
+      animation:pulse 1.8s infinite ease-in-out;
+    }
+    @keyframes pulse{
+      0%,100%{transform:scale(1);opacity:.75}
+      50%{transform:scale(1.12);opacity:1}
+    }
+    .start-title{
+      font-size:clamp(2.3rem,12vw,4.2rem);
+      line-height:.95;
+      letter-spacing:-.05em;
+      margin-bottom:18px;
+    }
+    .start-copy{
+      color:#d2deeb;
+      line-height:1.55;
+      margin:0 auto 26px;
+      max-width:420px;
+    }
+    .music-note{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      z-index:8;
+      border:1px solid var(--border);
+      background:rgba(4,19,38,.72);
+      color:white;
+      backdrop-filter:blur(10px);
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:.82rem;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:0 8px 28px rgba(0,0,0,.22);
+    }
+    .music-note button{
+      border:0;
+      background:transparent;
+      color:var(--gold-soft);
+      font-weight:800;
+      cursor:pointer;
+      padding:0;
+    }
+    .song-message{
+      margin-top:28px;
+      border:1px solid rgba(243,201,105,.22);
+      border-radius:24px;
+      padding:24px 20px;
+      background:rgba(243,201,105,.06);
+      text-align:left;
+    }
+    .song-message .song-title{
+      color:var(--gold);
+      font-weight:900;
+      font-size:.82rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      margin-bottom:10px;
+    }
+    .song-message p{
+      color:#d8e3ef;
+      line-height:1.6;
+      margin-bottom:0;
+    }
+    @media(max-width:760px){
+      .music-note{
+        right:12px;
+        bottom:max(12px, env(safe-area-inset-bottom));
+        font-size:.76rem;
+      }
+      .start-box{padding:24px 12px}
+    }
+
   </style>
 </head>
 <body>
+
+  <!--
+    IMPORTANTE:
+    Coloca en la misma carpeta del HTML un archivo de audio llamado:
+    unstoppable.mp3
+    Debes contar con permiso/licencia para usar esa grabación.
+  -->
+  <audio id="bgMusic" preload="auto" loop playsinline>
+    <source src="unstoppable.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="start-overlay" id="startOverlay">
+    <div class="start-box">
+      <div class="start-icon">✨</div>
+      <div class="eyebrow">Hay historias que merecen ser celebradas</div>
+      <h1 class="start-title">Natha,<br><span class="gold">esto es para ti.</span></h1>
+      <p class="start-copy">
+        Ponte los audífonos o sube un poco el volumen. Queremos que vivas este momento completo.
+      </p>
+      <button class="btn" id="startExperience">Comenzar experiencia ♫</button>
+    </div>
+  </div>
+
+  <div class="music-note" id="musicControl" style="display:none">
+    <span>♫ Sia · Unstoppable</span>
+    <button id="toggleMusic">Pausar</button>
+  </div>
+
   <canvas id="confetti"></canvas>
 
   <section class="page">
@@ -277,6 +405,17 @@
           <div class="metric"><strong id="monthsOrg">3</strong><span>meses que también cuentan historia</span></div>
           <div class="metric"><strong id="daysOrg">7</strong><span>días más dejando huella</span></div>
         </div>
+      </div>
+
+      <div class="song-message">
+        <div class="song-title">La canción de este momento · Unstoppable</div>
+        <p>
+          Elegí esta canción porque transmite una idea poderosa: avanzar con determinación,
+          confiar en lo que eres capaz de construir y seguir adelante incluso cuando el camino exige
+          más de ti. Hoy queremos que la escuches pensando en tu propia historia: en lo aprendido,
+          en los retos asumidos y en esa fuerza que te ha permitido llegar hasta aquí.
+          <strong>Porque este reconocimiento no llegó por casualidad.</strong>
+        </p>
       </div>
     </div>
   </section>
@@ -324,7 +463,7 @@
       <button class="close" id="closePrize" aria-label="Cerrar">×</button>
       <div class="mini">Tu bonificación comercial total</div>
       <h2>¡Felicitaciones, <span id="firstName2">Natha</span>!</h2>
-      <div class="amount" id="bonus">$18.435.480</div>
+      <div class="amount" id="bonus">$18.000.000</div>
       <p>
         Este reconocimiento representa mucho más que un resultado: habla de tu compromiso,
         de lo que construiste y del impacto que has generado. <strong>Disfrútalo. Te lo ganaste.</strong>
@@ -342,7 +481,7 @@
       orgMonths: 3,
       orgDays: 7,
       roleMonths: 8,
-      bonusCOP: 18435480
+      bonusCOP: 18000000
     };
 
     const formatCOP = value =>
@@ -364,6 +503,41 @@
     });
     document.getElementById("closePrize").addEventListener("click", () => reveal.classList.remove("show"));
     reveal.addEventListener("click", e => { if(e.target === reveal) reveal.classList.remove("show"); });
+
+
+    const bgMusic = document.getElementById("bgMusic");
+    const startOverlay = document.getElementById("startOverlay");
+    const startExperience = document.getElementById("startExperience");
+    const musicControl = document.getElementById("musicControl");
+    const toggleMusic = document.getElementById("toggleMusic");
+
+    bgMusic.volume = 0.42;
+
+    startExperience.addEventListener("click", async () => {
+      try {
+        await bgMusic.play();
+        musicControl.style.display = "flex";
+      } catch (err) {
+        console.log("El navegador no permitió iniciar el audio:", err);
+      }
+
+      startOverlay.classList.add("hide");
+      setTimeout(() => {
+        startOverlay.style.display = "none";
+      }, 750);
+    });
+
+    toggleMusic.addEventListener("click", async () => {
+      if (bgMusic.paused) {
+        try {
+          await bgMusic.play();
+          toggleMusic.textContent = "Pausar";
+        } catch (err) {}
+      } else {
+        bgMusic.pause();
+        toggleMusic.textContent = "Reproducir";
+      }
+    });
 
     function launchConfetti(){
       const canvas = document.getElementById("confetti");
