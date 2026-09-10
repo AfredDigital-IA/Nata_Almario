@@ -357,6 +357,14 @@
       .start-box{padding:24px 12px}
     }
 
+  
+    #startExperience{
+      position:relative;
+      z-index:3;
+      -webkit-user-select:none;
+      user-select:none;
+    }
+
   </style>
 </head>
 <body>
@@ -379,7 +387,7 @@
       <p class="start-copy">
         Ponte los audífonos o sube un poco el volumen. Queremos que vivas este momento completo.
       </p>
-      <button class="btn" id="startExperience">Comenzar experiencia ♫</button>
+      <button type="button" class="btn" id="startExperience">Comenzar experiencia ♫</button>
     </div>
   </div>
 
@@ -412,8 +420,7 @@
         <p>
           Elegí esta canción porque transmite una idea poderosa: avanzar con determinación,
           confiar en lo que eres capaz de construir y seguir adelante incluso cuando el camino exige
-          más de ti. Hoy queremos que la escuches pensando en tu propia historia: en lo aprendido,
-          en los retos asumidos y en esa fuerza que te ha permitido llegar hasta aquí.
+          más de ti. 
           <strong>Porque este reconocimiento no llegó por casualidad.</strong>
         </p>
       </div>
@@ -452,7 +459,7 @@
         Todo ese recorrido, sumado a lo que lograste en este primer semestre, te hace merecedora
         de un reconocimiento muy especial.
       </p>
-      <button class="btn" id="openPrize">Abrir mi reconocimiento ✨</button>
+      <button type="button" class="btn" id="openPrize">Abrir mi reconocimiento ✨</button>
       <div class="hint">Toca el botón cuando estés lista.</div>
       <div class="footer">Hecho para celebrar una historia, no solo una cifra.</div>
     </div>
@@ -513,30 +520,77 @@
 
     bgMusic.volume = 0.42;
 
-    startExperience.addEventListener("click", async () => {
-      try {
-        await bgMusic.play();
-        musicControl.style.display = "flex";
-      } catch (err) {
-        console.log("El navegador no permitió iniciar el audio:", err);
-      }
-
+    function enterExperience() {
+      // 1) La experiencia SIEMPRE empieza inmediatamente.
       startOverlay.classList.add("hide");
+      document.body.style.overflowY = "auto";
+
       setTimeout(() => {
         startOverlay.style.display = "none";
-      }, 750);
-    });
+      }, 700);
 
-    toggleMusic.addEventListener("click", async () => {
+      // 2) Intentamos reproducir la música SIN bloquear la navegación.
+      // Si el archivo no existe o el navegador la bloquea, la landing sigue funcionando.
+      try {
+        const playPromise = bgMusic.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              musicControl.style.display = "flex";
+              toggleMusic.textContent = "Pausar";
+            })
+            .catch((err) => {
+              console.log("Audio no disponible o bloqueado:", err);
+              musicControl.style.display = "none";
+            });
+        } else {
+          musicControl.style.display = "flex";
+        }
+      } catch (err) {
+        console.log("No fue posible iniciar el audio:", err);
+        musicControl.style.display = "none";
+      }
+    }
+
+    // click + touchend para mayor compatibilidad con navegadores internos móviles.
+    let experienceStarted = false;
+
+    function startOnce(event) {
+      if (experienceStarted) return;
+      experienceStarted = true;
+      if (event) event.preventDefault();
+      enterExperience();
+    }
+
+    startExperience.addEventListener("click", startOnce, { passive: false });
+    startExperience.addEventListener("touchend", startOnce, { passive: false });
+
+    toggleMusic.addEventListener("click", () => {
       if (bgMusic.paused) {
         try {
-          await bgMusic.play();
-          toggleMusic.textContent = "Pausar";
-        } catch (err) {}
+          const p = bgMusic.play();
+          if (p && typeof p.then === "function") {
+            p.then(() => {
+              toggleMusic.textContent = "Pausar";
+            }).catch(() => {
+              toggleMusic.textContent = "Reproducir";
+            });
+          } else {
+            toggleMusic.textContent = "Pausar";
+          }
+        } catch (err) {
+          toggleMusic.textContent = "Reproducir";
+        }
       } else {
         bgMusic.pause();
         toggleMusic.textContent = "Reproducir";
       }
+    });
+
+    // Si el audio falla, nunca dejamos la interfaz "congelada".
+    bgMusic.addEventListener("error", () => {
+      musicControl.style.display = "none";
     });
 
     function launchConfetti(){
